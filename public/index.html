@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP MCP Gateway · Live demo</title>
+<meta name="description" content="An AI agent reads order emails and proposes ERP orders over MCP. Nothing is written until a person approves.">
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #16181d; --muted: #5d6470; --line: #e3e6eb;
+  --accent: #2357d9; --accent-ink: #ffffff; --soft: #eef2fb;
+  --ok: #157347; --ok-bg: #e6f4ec; --warn: #9a5b00; --warn-bg: #fdf3e1;
+  --bad: #b42318; --bad-bg: #fdecea; --info: #3b4a63; --info-bg: #edf0f5;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115; --panel: #171a21; --ink: #e8eaee; --muted: #9aa2ae; --line: #2a2f39;
+    --accent: #6b93ff; --accent-ink: #0f1115; --soft: #1c2333;
+    --ok: #5fd39a; --ok-bg: #12291f; --warn: #f2b45a; --warn-bg: #2d2412;
+    --bad: #ff8a80; --bad-bg: #2f1715; --info: #b8c3d6; --info-bg: #1f2531;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { padding: 28px 16px 8px; max-width: 1240px; margin: 0 auto; }
+h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.lead { margin: 0; color: var(--muted); max-width: 760px; }
+.note { margin: 14px 0 0; padding: 10px 12px; background: var(--soft); border-radius: 8px; font-size: 14px; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: s; }
+.steps li { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; color: var(--muted); }
+.steps b { color: var(--ink); display: block; font-size: 14px; }
+main { max-width: 1240px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 14px;
+  grid-template-columns: 340px 1fr; grid-template-areas: "inbox agent" "inbox queue" "erp erp" "audit audit" "probe tools"; }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: baseline; gap: 8px; }
+h2 small { color: var(--muted); font-weight: 400; font-size: 13px; }
+#inbox { grid-area: inbox; } #agent { grid-area: agent; } #queue { grid-area: queue; }
+#erp { grid-area: erp; } #audit { grid-area: audit; } #probe { grid-area: probe; } #tools { grid-area: tools; }
+.mail { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+.mail .subj { font-weight: 600; font-size: 14px; }
+.mail .from { color: var(--muted); font-size: 12.5px; font-family: var(--mono); word-break: break-all; }
+.mail .hint { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+button { font: inherit; font-size: 13.5px; border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.good { background: var(--ok); color: var(--panel); border-color: var(--ok); }
+button:disabled { opacity: .5; cursor: progress; }
+button.link { border: 0; background: none; color: var(--accent); padding: 0; }
+pre { white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 12.5px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin: 8px 0 0; }
+textarea { width: 100%; min-height: 170px; font-family: var(--mono); font-size: 12.5px; padding: 8px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
+.b-ok { color: var(--ok); background: var(--ok-bg); } .b-warn { color: var(--warn); background: var(--warn-bg); }
+.b-bad { color: var(--bad); background: var(--bad-bg); } .b-info { color: var(--info); background: var(--info-bg); }
+.empty { color: var(--muted); font-size: 14px; }
+.item { border-top: 1px solid var(--line); padding: 10px 0; }
+.item:first-child { border-top: 0; padding-top: 0; }
+.item .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.item ul { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; }
+.item li.w { color: var(--warn); } .item li.i { color: var(--bad); }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.muted { color: var(--muted); }
+.tables { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12.5px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.flash td { background: var(--soft); }
+#audit .scroll { max-height: 420px; overflow-y: auto; }
+#audit td { white-space: nowrap; } #audit td:last-child { white-space: normal; min-width: 180px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+.chip.p { border-color: var(--warn); color: var(--warn); }
+#toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: var(--panel);
+  padding: 8px 14px; border-radius: 8px; font-size: 14px; display: none; max-width: calc(100% - 32px); }
+footer { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: 13px; }
+footer a, .note a { color: var(--accent); }
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; grid-template-areas: "inbox" "agent" "queue" "erp" "audit" "probe" "tools"; }
+  .steps { grid-template-columns: 1fr 1fr; }
+  .tables { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>ERP MCP Gateway <span class="muted" style="font-weight:400">· live demo</span></h1>
+  <p class="lead">An AI agent reads order emails and works with an ERP through an MCP server. It can read data and
+    <em>propose</em> changes. Nothing is written to the ERP until a person approves, and every step is in the audit log.</p>
+  <p class="note">This is a reference build running on a demo ERP with sample data, not a client system. Emails here are
+    read by fixed rules, not an AI model. Your session is private and starts fresh when you reload the page.</p>
+  <ol class="steps">
+    <li><b>1. Email arrives</b>Pick one from the inbox, or write your own.</li>
+    <li><b>2. Agent reads it</b>It checks the sender and products with read tools over MCP.</li>
+    <li><b>3. Agent proposes</b>The order waits in the queue. The ERP is unchanged.</li>
+    <li><b>4. A person decides</b>Approve or reject. Only then does the gateway write.</li>
+  </ol>
+</header>
+
+<main>
+  <section id="inbox">
+    <h2>Inbox <small>5 sample emails</small></h2>
+    <div id="mails"><p class="empty">Loading…</p></div>
+    <div class="mail">
+      <div class="subj">Write your own order email</div>
+      <div class="hint">The reader accepts one strict layout. Anything else goes to a person.</div>
+      <div id="custom" hidden>
+        <textarea id="customText" maxlength="4000" spellcheck="false"></textarea>
+        <div class="row"><button class="primary" id="sendCustom">Send to agent</button></div>
+      </div>
+      <div class="row"><button class="link" id="toggleCustom">Open editor</button></div>
+    </div>
+  </section>
+
+  <section id="agent">
+    <h2>Agent <small>what it did with each email</small></h2>
+    <div id="agentLog"><p class="empty">Send an email from the inbox to start.</p></div>
+  </section>
+
+  <section id="queue">
+    <h2>Approval queue <small>you are the approver</small></h2>
+    <div id="changes"><p class="empty">No proposed changes yet.</p></div>
+  </section>
+
+  <section id="erp">
+    <h2>ERP <small>live data in your private copy</small></h2>
+    <div class="tables">
+      <div class="scroll"><table><thead><tr><th>SKU</th><th>Product</th><th class="num">Stock</th><th class="num">Price</th></tr></thead><tbody id="products"></tbody></table></div>
+      <div class="scroll"><table><thead><tr><th>Order</th><th>Customer</th><th>Reference</th><th>Status</th><th class="num">Total</th></tr></thead><tbody id="orders"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="audit">
+    <h2>Audit log <small>every tool call and every decision, newest first</small></h2>
+    <div class="scroll"><table><thead><tr><th>Time (UTC)</th><th>Who</th><th>Role</th><th>Action</th><th>Outcome</th><th>Detail</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+  </section>
+
+  <section id="probe">
+    <h2>Try to get past it</h2>
+    <div class="row" style="margin-top:0">
+      <button data-probe="no_token">Call MCP with no token</button>
+      <button data-probe="reader_propose">Read-only token tries to propose</button>
+      <button data-probe="agent_approve">Agent tries to approve its own order</button>
+    </div>
+    <div id="probeLog" style="margin-top:10px"></div>
+  </section>
+
+  <section id="tools">
+    <h2>Tools the agent sees over MCP</h2>
+    <div class="chips" id="toolChips"></div>
+    <p class="muted" style="font-size:13px;margin:10px 0 0">Read tools return live data. <span class="chip p">propose_*</span> tools only queue a change for a person.</p>
+  </section>
+</main>
+
+<footer>
+  Python, the official MCP SDK, FastAPI and SQLite. Source code and tests:
+  <a href="https://github.com/Ahmedsukaik/erp-mcp-gateway" rel="noopener">github.com/Ahmedsukaik/erp-mcp-gateway</a>
+</footer>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const clicks = [];
+let busy = false, lastOrders = new Set();
+
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined && v !== false) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false)
+    n.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return n;
+}
+const money = (pence) => "£" + (pence / 100).toFixed(2);
+const STATUS = {
+  proposed: ["Proposed, waiting for approval", "b-info"], already_proposed: ["Already proposed, nothing new queued", "b-info"],
+  needs_human: ["Sent to a person, nothing proposed", "b-warn"], not_an_order: ["Not an order", "b-warn"],
+  pending: ["pending", "b-info"], approved: ["approved, written to ERP", "b-ok"], rejected: ["rejected", "b-bad"],
+  failed: ["failed, nothing written", "b-bad"], unknown: ["unknown", "b-warn"], applying: ["applying", "b-info"],
+  ok: ["ok", "b-ok"], denied: ["denied", "b-bad"], error: ["error", "b-bad"],
+};
+const badge = (s) => { const [t, c] = STATUS[s] || [s, "b-info"]; return el("span", { class: "badge " + c }, t); };
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast.h); toast.h = setTimeout(() => (t.style.display = "none"), 4500);
+}
+
+async function send(action) {
+  if (busy) return;
+  busy = true; document.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  try {
+    const r = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history: clicks, action }) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const msg = typeof data.detail === "string" ? data.detail : "That did not work.";
+      toast(r.status === 422 && clicks.length >= 40 ? "This session is full. Reload the page to start again." : msg);
+      return;
+    }
+    if (action) clicks.push(action);
+    render(data);
+  } catch (e) {
+    toast("Could not reach the demo server. Try again.");
+  } finally {
+    busy = false; document.querySelectorAll("button").forEach((b) => (b.disabled = false));
+  }
+}
+
+function render(d) {
+  if (d.last) logLast(d.last);
+  // queue
+  const ch = $("changes"); ch.replaceChildren();
+  if (!d.changes.length) ch.append(el("p", { class: "empty" }, "No proposed changes yet."));
+  for (const c of d.changes.slice().reverse()) {
+    const notes = [...c.warnings.map((w) => el("li", { class: "w" }, w))];
+    if (c.error) notes.push(el("li", { class: c.status === "rejected" ? "" : "i" }, (c.status === "rejected" ? "Reason: " : "") + c.error));
+    const actions = [];
+    if (["pending", "failed", "unknown"].includes(c.status))
+      actions.push(el("button", { class: "good", onclick: () => send({ type: "approve", change: c.number }) }, "Approve"));
+    if (["pending", "failed"].includes(c.status))
+      actions.push(el("button", { onclick: () => send({ type: "reject", change: c.number, reason: "Rejected in the demo" }) }, "Reject"));
+    if (c.status === "approved") actions.push(el("button", { onclick: () => send({ type: "approve", change: c.number }) }, "Approve again (duplicate test)"));
+    ch.append(el("div", { class: "item" },
+      el("div", { class: "head" }, el("b", {}, "#" + c.number), badge(c.status), el("span", { class: "mono muted" }, c.id)),
+      el("div", { style: "margin-top:4px" }, c.summary),
+      c.result && c.result.id ? el("div", { class: "muted", style: "font-size:13px" }, `ERP order #${c.result.id} created by ${c.decided_by}`) : null,
+      notes.length ? el("ul", {}, notes) : null,
+      actions.length ? el("div", { class: "row" }, actions) : null));
+  }
+  // ERP
+  $("products").replaceChildren(...d.products.map((p) => el("tr", {},
+    el("td", { class: "mono" }, p.sku), el("td", {}, p.name),
+    el("td", { class: "num" }, String(p.stock), p.stock <= p.reorder_level ? el("span", { class: "badge b-warn", style: "margin-left:6px" }, "low") : null),
+    el("td", { class: "num" }, money(p.unit_price)))));
+  const seen = new Set(d.orders.map((o) => o.id));
+  $("orders").replaceChildren(...d.orders.map((o) => el("tr", { class: lastOrders.size && !lastOrders.has(o.id) ? "flash" : "" },
+    el("td", {}, "#" + o.id), el("td", { class: "mono" }, o.customer_id), el("td", { class: "mono" }, o.reference || "—"),
+    el("td", {}, o.status), el("td", { class: "num" }, money(o.total)))));
+  lastOrders = seen;
+  // audit
+  $("auditRows").replaceChildren(...d.audit.map((a) => el("tr", {},
+    el("td", { class: "mono" }, a.ts.slice(11, 19)), el("td", {}, a.actor), el("td", { class: "muted" }, a.role),
+    el("td", { class: "mono" }, a.action), el("td", {}, badge(a.outcome)),
+    el("td", { class: "muted", style: "font-size:13px" }, a.detail || ""))));
+  if (!d.audit.length) $("auditRows").append(el("tr", {}, el("td", { colspan: 6, class: "empty" }, "Nothing yet.")));
+  // tools
+  $("toolChips").replaceChildren(...d.tools.map((t) => el("span", { class: "chip" + (t.kind === "propose" ? " p" : "") }, t.name)));
+}
+
+function logLast(last) {
+  if (last.type === "email") {
+    const r = last.result, log = $("agentLog");
+    if (log.querySelector(".empty")) log.replaceChildren();
+    const subject = (window.SAMPLES || {})[last.sample]?.subject || "Your own email";
+    const lines = [...r.issues.map((i) => el("li", { class: "i" }, i)), ...r.warnings.map((w) => el("li", { class: "w" }, w))];
+    log.prepend(el("div", { class: "item" },
+      el("div", { class: "head" }, el("b", {}, subject), badge(r.status), r.change ? el("span", { class: "muted" }, "→ change #" + r.change) : null),
+      r.summary ? el("div", { style: "margin-top:4px" }, r.summary) : null,
+      lines.length ? el("ul", {}, lines) : null));
+  } else if (last.type === "probe") {
+    const what = { no_token: "No token", reader_propose: "Read-only token proposes", agent_approve: "Agent approves" }[last.probe];
+    const code = last.http_status ? `HTTP ${last.http_status}: ` : "";
+    $("probeLog").prepend(el("div", { class: "item" },
+      el("div", { class: "head" }, el("b", {}, what), badge(last.error ? "denied" : "ok")),
+      el("div", { class: "mono", style: "margin-top:4px" }, code + (last.error || "allowed"))));
+  } else if (last.http_status && last.http_status >= 400) {
+    toast(last.error || "Refused.");
+  } else if (last.type === "approve" && last.status === "failed") {
+    toast("The ERP refused it, so nothing was written. See the queue.");
+  }
+}
+
+async function init() {
+  const samples = await (await fetch("/api/samples")).json();
+  window.SAMPLES = Object.fromEntries(samples.map((s) => [s.id, s]));
+  const hints = {
+    "01_clear_order": "A clear order from a known customer.",
+    "02_more_than_stock": "Asks for more than is in stock.",
+    "03_unknown_sender": "Unknown sender, with an instruction aimed at the AI.",
+    "04_unknown_product": "One product code does not exist.",
+    "05_unclear_quantity": "A quantity that could be read two ways.",
+  };
+  $("mails").replaceChildren(...samples.map((s) => {
+    const body = el("pre", { hidden: true }, s.text);
+    return el("div", { class: "mail" },
+      el("div", { class: "subj" }, s.subject), el("div", { class: "from" }, s.from),
+      el("div", { class: "hint" }, hints[s.id] || ""),
+      el("div", { class: "row" },
+        el("button", { class: "primary", onclick: () => send({ type: "email", sample: s.id }) }, "Send to agent"),
+        el("button", { class: "link", onclick: (e) => { body.hidden = !body.hidden; e.target.textContent = body.hidden ? "View email" : "Hide email"; } }, "View email")),
+      body);
+  }));
+  $("customText").value = "From: orders@northwind.example\nSubject: PO 50117\n\nHi team,\n\nPO 50117\n12 x WID-200\n3 x BOX-050\n\nThanks,\nPriya";
+  $("toggleCustom").onclick = (e) => { const c = $("custom"); c.hidden = !c.hidden; e.target.textContent = c.hidden ? "Open editor" : "Close editor"; };
+  $("sendCustom").onclick = () => send({ type: "email", text: $("customText").value });
+  document.querySelectorAll("[data-probe]").forEach((b) => (b.onclick = () => send({ type: "probe", probe: b.dataset.probe })));
+  await send(null);
+}
+init().catch(() => toast("Could not load the demo. Try reloading."));
+</script>
+</body>
+</html>
