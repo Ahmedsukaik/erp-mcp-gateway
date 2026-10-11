@@ -3,6 +3,10 @@
 A reference implementation of how to let AI agents work inside a business system
 without letting them write to it unsupervised.
 
+**Live demo: https://erp-mcp-gateway-demo.vercel.app**
+Send an order email to the agent, approve or reject what it proposes, and watch the ERP and
+the audit log change. Each visitor gets a private copy that starts fresh on reload.
+
 ![The demo, scene by scene](docs/img/demo.gif)
 
 *The real output of `python demo.py`, replayed scene by scene. In this run the emails are
@@ -223,7 +227,9 @@ agent/extract.py      email -> structured order (strict rules, or Claude)
 agent/order_intake.py the workflow: match the sender, check products, propose
 docs/TOOLS.md         every tool with its arguments (generated)
 docs/USER_GUIDE.md    for the people who approve changes
+web/demo_app.py       the live web demo: per request, a private stack that replays the visitor's clicks
 tests/                109 tests; about half start both servers and use real HTTP and MCP
+                      (plus 16 for the web demo in tests/test_web_demo.py)
 ```
 
 ## What the tests cover, and what they do not

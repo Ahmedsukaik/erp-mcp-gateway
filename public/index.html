@@ -209,6 +209,11 @@ async function send(action) {
     }
     if (action) clicks.push(action);
     render(data);
+    // On a phone the panels are stacked, so bring the one that changed into view.
+    if (action && window.matchMedia("(max-width: 900px)").matches) {
+      const target = { email: "agent", approve: "queue", reject: "queue", probe: "probe" }[action.type];
+      $(target).scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   } catch (e) {
     toast("Could not reach the demo server. Try again.");
   } finally {
