@@ -1,0 +1,11 @@
+From: buyer@leedsoffice.example
+To: sales@demo-erp.example
+Subject: PO LO-77
+
+Hi,
+
+PO LO-77
+5 x WID-100
+3 x ZZZ-999
+
+Thanks, Leeds Office Supplies

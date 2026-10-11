@@ -1,0 +1,15 @@
+From: Priya Shah <orders@northwind.example>
+To: sales@demo-erp.example
+Subject: PO 48213 - widgets
+
+Hi team,
+
+Please enter the following order.
+
+PO 48213
+40 x WID-100
+10 x WID-200
+
+Thanks,
+Priya
+Northwind Traders Ltd

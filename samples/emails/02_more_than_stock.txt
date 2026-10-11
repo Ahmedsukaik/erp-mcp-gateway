@@ -1,0 +1,14 @@
+From: purchasing@harbourcafe.example
+To: sales@demo-erp.example
+Subject: Urgent order, PO HC-2291
+
+Hello,
+
+Urgent order, please.
+
+PO HC-2291
+30 x GAD-010
+2 x BOX-050
+
+Regards,
+Tom, Harbour Cafe Group

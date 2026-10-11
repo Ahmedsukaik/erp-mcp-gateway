@@ -1,0 +1,11 @@
+From: purchasing@harbourcafe.example
+To: sales@demo-erp.example
+Subject: PO HC-2305
+
+Hello,
+
+PO HC-2305
+1,050 x BOX-050
+
+Regards,
+Tom, Harbour Cafe Group
