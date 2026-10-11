@@ -3,6 +3,28 @@
 A reference implementation of how to let AI agents work inside a business system
 without letting them write to it unsupervised.
 
+![The demo, scene by scene](docs/img/demo.gif)
+
+*The real output of `python demo.py`, replayed scene by scene. In this run the emails are
+read by fixed rules, with no AI model.*
+
+## What it does in 30 seconds
+
+Your team copies orders from emails into the ERP by hand. This lets an AI agent do the
+reading and the typing, without ever giving it the power to change your data on its own.
+
+- The agent reads an order email, checks the customer, the products and the stock, and
+  **proposes** the order.
+- A person sees the proposal and approves it. Only then is the order written to the ERP.
+- If something is off (not enough stock, an unknown sender, an unclear quantity), the agent
+  stops and hands the email to a person.
+- Every action is logged: which agent did what, and what happened.
+
+It runs on a demo ERP, not a client system. The same design connects to any ERP that has
+an API.
+
+## How it is built
+
 It has three parts:
 
 | Part | Folder | What it is |
