@@ -4,6 +4,9 @@ A reference implementation of how to let AI agents work inside a business system
 without letting them write to it unsupervised.
 
 **Live demo: https://erp-mcp-gateway-demo.vercel.app**
+
+**Video walkthrough (1 minute): https://youtu.be/9JtfTjOL1Vs**
+
 Send an order email to the agent, approve or reject what it proposes, and watch the ERP and
 the audit log change. Each visitor gets a private copy that starts fresh on reload.
 
